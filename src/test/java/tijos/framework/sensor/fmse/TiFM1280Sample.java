@@ -25,21 +25,36 @@ public class TiFM1280Sample {
 			byte[] atr = se.PowerOn();
 			System.out.println("ATR:" + Formatter.toHexString(atr));
 
-			byte[] rnd = new byte[16];
 			for (int i = 0; i < 10; i++) {
-				int sw = se.getChallenge(rnd, rnd.length);
+				byte [] rnd  = se.getChallenge(16);
 				System.out.println("RND:" + Formatter.toHexString(rnd));
-				System.out.println("SW:" + Formatter.toHexString(BigBitConverter.GetBytes((short) sw)));
 			}
+		
+			
+			byte [] finfo = se.selectFile(0x3f00);
+			System.out.println("3f00 finfo:" + Formatter.toHexString(finfo));
+			
+			finfo = se.selectFile(0xdf01);
+			System.out.println("df01 finfo:" + Formatter.toHexString(finfo));
+			
+
+			finfo = se.selectFile(0x0128);
+			System.out.println("0x0128 finfo:" + Formatter.toHexString(finfo));
+
+			byte [] bin = se.readBinary(0, 64);
+			System.out.println("0x0128 bin:" + Formatter.toHexString(bin));
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (SEException e) {
+		} catch (TransactException e) {
 			System.out.println("SE error:" + e.getReason());
+		} catch (ISOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
 			try {
 				se.PowerOff();
-			} catch (SEException e) {
+			} catch (TransactException e) {
 				e.printStackTrace();
 
 			}

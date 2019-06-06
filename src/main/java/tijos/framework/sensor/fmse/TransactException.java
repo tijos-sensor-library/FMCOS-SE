@@ -1,7 +1,7 @@
 package tijos.framework.sensor.fmse;
 
 @SuppressWarnings("serial")
-public class SEException extends Exception {
+public class TransactException extends Exception {
 
 	/**
 	 * SE数据校验错误
@@ -37,7 +37,7 @@ public class SEException extends Exception {
 	 * 
 	 * @param reason 原因码
 	 */
-	public SEException(int reason) {
+	public TransactException(int reason) {
 		this.reason = reason;
 	}
 
@@ -47,7 +47,7 @@ public class SEException extends Exception {
 	 * @param reason  原因码
 	 * @param message 消息
 	 */
-	public SEException(int reason, String message) {
+	public TransactException(int reason, String message) {
 		super(message);
 		this.reason = reason;
 	}

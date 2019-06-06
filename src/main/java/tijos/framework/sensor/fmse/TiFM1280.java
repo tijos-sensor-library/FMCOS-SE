@@ -43,9 +43,9 @@ public class TiFM1280 {
 	 * 上电操作
 	 * 
 	 * @return ATR数据
-	 * @throws SEException
+	 * @throws TransactException
 	 */
-	public byte[] PowerOn() throws SEException {
+	public byte[] PowerOn() throws TransactException {
 		this._driver.openDev();
 		return this._driver.getATR();
 	}
@@ -53,9 +53,9 @@ public class TiFM1280 {
 	/**
 	 * 下电操作
 	 * 
-	 * @throws SEException
+	 * @throws TransactException
 	 */
-	public void PowerOff() throws SEException {
+	public void PowerOff() throws TransactException {
 		this._driver.closeDev();
 	}
 
@@ -65,22 +65,74 @@ public class TiFM1280 {
 	 * @param rnd 随机数缓冲区
 	 * @param len 获取长度
 	 * @return SW码
-	 * @throws SEException
+	 * @throws TransactException
+	 * @throws ISOException 
 	 */
-	public int getChallenge(byte[] rnd, int len) throws SEException {
+	public byte [] getChallenge(int len) throws TransactException, ISOException {
 		int le = (len > 16) ? 16 : len;
-		if (le > rnd.length) {
-			throw new ArrayIndexOutOfBoundsException(le - rnd.length);
-		}
+
 		byte[] cmd = new byte[] { 0x00, (byte) 0x84, 0x00, 0x00, (byte) le };
-		byte[] rsp = this._driver.transmitData(cmd);
-
-		int ln = rsp.length - 2;
-		System.arraycopy(rsp, 0, rnd, 0, ln);
-
-		return BigBitConverter.ToUInt16(rsp, ln);
+		
+		byte [] tmp = this.deviceIo(cmd);
+		return tmp;
 	}
 
-	// ...其他方法
+	/**
+	 * Select file by file id
+	 * @param fid file id 
+	 * @return file data 
+	 * @throws ISOException
+	 * @throws TransactException
+	 */
+	public byte [] selectFile(int fid) throws ISOException, TransactException {
+		
+		byte [] b = BigBitConverter.GetBytes((short)fid);
+		
+		byte[] cmd = new byte[] { 0x00, (byte) 0xA4, 0x00, 0x00, (byte) b.length, b[0], b[1]};
+		byte [] tmp = this.deviceIo(cmd);
+		return tmp;
+	}
+	
+	/**
+	 * read binary from offset 
+	 * @param offset
+	 * @param len
+	 * @return
+	 * @throws ISOException
+	 * @throws TransactException
+	 */
+	public byte [] readBinary(int offset, int len) throws ISOException, TransactException {
+
+		byte [] b = BigBitConverter.GetBytes((short)offset);
+		
+		byte[] cmd = new byte[] { 0x00, (byte) 0xB0, b[0], b[1], (byte)len};
+		byte [] tmp = this.deviceIo(cmd);
+		return tmp;
+		
+	}
+
+	/**
+	 * Send command and return data 
+	 * @param cmd
+	 * @return response data
+	 * @throws ISOException the exception is throw if sw != 0x9000
+	 * @throws TransactException
+	 */
+	private byte [] deviceIo(byte [] cmd) throws ISOException, TransactException {
+		byte[] rsp = this._driver.transmitData(cmd);
+
+		int sw = BigBitConverter.ToUInt16(rsp, rsp.length -2);
+		
+		if(sw != 0x9000)
+			throw new ISOException(sw);
+	
+		byte [] tmp = new byte[rsp.length - 2];
+		System.arraycopy(rsp, 0, tmp, 0, rsp.length -2);
+		
+		return tmp;
+		
+	}
+	
+	
 
 }

@@ -107,30 +107,30 @@ class I2cDriver {
 	/**
 	 * 设备打开
 	 * 
-	 * @throws SEException
+	 * @throws TransactException
 	 */
-	void openDev() throws SEException {
+	void openDev() throws TransactException {
 		try {
 			this._gpio.setWorkMode(this._pin, TiGPIO.OUTPUT_PP);
-			this._gpio.writePin(this._pin, 0);
-			this._i2cm.setWorkBaudrate(100);
+			this._gpio.writePin(this._pin, 1);
+			this._i2cm.setWorkBaudrate(0); // 平台最小通讯速率
 		} catch (IOException e) {
-			throw new SEException(255, e.getMessage());
+			throw new TransactException(255, e.getMessage());
 		}
 	}
 
 	/**
 	 * 驱动关闭
 	 * 
-	 * @throws SEException
+	 * @throws TransactException
 	 */
-	void closeDev() throws SEException {
+	void closeDev() throws TransactException {
 		try {
 			this._i2cm.close();
-			this._gpio.writePin(this._pin, 1);
+			this._gpio.writePin(this._pin, 0);
 			this._gpio.close();
 		} catch (IOException e) {
-			throw new SEException(255, e.getMessage());
+			throw new TransactException(255, e.getMessage());
 		}
 	}
 
@@ -138,20 +138,20 @@ class I2cDriver {
 	 * 获取ATR数据
 	 * 
 	 * @return ATR
-	 * @throws SEException
+	 * @throws TransactException
 	 */
-	byte[] getATR() throws SEException {
+	byte[] getATR() throws TransactException {
 		int nRet = this.sendFrame(0x30, null); // I-BLOCK ATR请求块
 		if (nRet != 0) {
-			throw new SEException(nRet);
+			throw new TransactException(nRet);
 		}
 		int time = (int) System.currentTimeMillis();
 		int[] state = new int[1];
 		byte[] recv = new byte[0];
 		do {
 			recv = this.recvFrame(state);
-			if (state[0] != 0) {
-				throw new SEException(state[0]);
+			if (state[0] != 0 && state[0] != 12) {
+				throw new TransactException(state[0]);
 			}
 			int now = (int) System.currentTimeMillis();
 			if (now - time > 6000) {
@@ -167,12 +167,12 @@ class I2cDriver {
 	 * 
 	 * @param buffer 发送数据缓冲区
 	 * @return
-	 * @throws SEException
+	 * @throws TransactException
 	 */
-	byte[] transmitData(byte[] buffer) throws SEException {
+	byte[] transmitData(byte[] buffer) throws TransactException {
 		int nRet = this.sendFrame(0x02, buffer); // I-BLOCK 数据块
 		if (nRet != 0) {
-			throw new SEException(nRet);
+			throw new TransactException(nRet);
 		}
 		int time = (int) System.currentTimeMillis();
 		int[] state = new int[1];
@@ -188,7 +188,7 @@ class I2cDriver {
 				time = (int) System.currentTimeMillis();
 			} else {
 				if (state[0] != 0) {
-					throw new SEException(state[0]);
+					throw new TransactException(state[0]);
 				}
 			}
 			int now = (int) System.currentTimeMillis();
